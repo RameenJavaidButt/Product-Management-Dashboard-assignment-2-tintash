@@ -1,3 +1,39 @@
+
+# Product Management Dashboard
+
+## Setup Instructions
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/rameenbutt-ui/Product-Management-Dashboard-assignment-2-tintash.git
+   cd product-management-dashboard
+
+# Technologies Used
+
+React
+
+TypeScript
+
+Redux Toolkit
+
+React Query (TanStack Query)
+
+Tailwind CSS
+
+Axios (for API requests)
+
+Assumptions Made
+
+Added products are stored only in Redux (no backend).
+
+Filtering (by category and price) and search are done.
+
+Delete action removes product from Redux store only.
+
+All fields in Add Product form are required.
+
+
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
