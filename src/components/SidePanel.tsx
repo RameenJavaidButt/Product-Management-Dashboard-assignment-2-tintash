@@ -1,6 +1,13 @@
 import { useSelector } from "react-redux";
 import type { RootState } from "../store";
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { addProduct } from "../store/productsSlice";
+import { uniqueCategories } from "../utils/uniqueCategories";
+import { formattedCategory } from "../utils/formattedCategory";
+import { toast } from 'sonner';
+
+
 interface SidePanelProps {
     isOpen: boolean;
     onClose: () => void;
@@ -13,17 +20,18 @@ export default function SidePanel({ isOpen, onClose }: SidePanelProps) {
     const [description, setDescription] = useState("");
     const [image, setImage] = useState("");
     const products = useSelector((state: RootState) => state.products.items);
+    const dispatch = useDispatch();
+    const uniqueCategory = uniqueCategories(products);
 
-    const uniqueCategories = [
-        ...new Set(products.map((product) => product.category.toLowerCase()))
-    ].sort();
+
     return (
         <>
-            {/* Overlay */}
+            {/* Overlay 
+            condition && value: if condition true return true in this case render div*/}
             {isOpen && (
                 <div
-                    className="fixed inset-0 bg-black/40"
-                    onClick={onClose}
+                    className="fixed inset-0 bg-black/40"//create dark transparent screen behind the panel.
+                    onClick={onClose}//When clickded outside the panel the overlay receives the click.
                 >
 
                 </div>
@@ -40,14 +48,55 @@ export default function SidePanel({ isOpen, onClose }: SidePanelProps) {
 
 
                         <button
-                            onClick={onClose}
+                            onClick={() => {
+                                setTitle(""); setCategory(""); setDescription(""); setImage(""); setPrice("");
+                                onClose()
+                            }}
                             className="px-4 py-2 bg-purple-400 text-white rounded hover:bg-purple-600"
                         >
                             x
                         </button>
                     </div>
                     <p className="text-gray-300">All the fields are required. </p>
-                    <form >
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault(); // prevent page reload
+                            /*Generate a new id for the produt, i have stored the values and will use them */
+                            if (isNaN(Number(price)) || price.trim() === "") {
+                                alert("Please enter a valid numeric price.");
+                                return; // Stop the function here so no product is created
+                            }
+
+                            const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                            const newProduct = {
+                                id: newId,
+                                title,
+                                price: parseFloat(price),
+                                category,
+                                description,
+                                image,
+                                rating: {
+                                    rate: 0,
+                                    count: 0
+                                }
+                            };
+                            dispatch(addProduct(newProduct));
+                            toast.success('New product added', {
+                                description: 'The item is now live in your store.',
+                                className: 'bg-white border-green-500 text-green-700',
+                            });
+                            //need to clear the fields 
+
+                            setTitle(""); setCategory(""); setDescription(""); setImage(""); setPrice("");
+
+                            onClose();
+
+
+                        }
+                        }
+
+                    >
+
                         <div className="text-gray-300 flex flex-col justify-between gap-3 p-2 mt-8">
                             <label > Title</label>
                             <input
@@ -70,17 +119,22 @@ export default function SidePanel({ isOpen, onClose }: SidePanelProps) {
                                 onChange={e => setCategory(e.target.value)}
                                 className="flex-1 p-2 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" required
                             >
-                            <label>Category</label>
-                            
-                                <option className="text-gray-900 bg-gray-400" value="">Select Category</option>
+                                <label>Category</label>
 
+                                <option className="text-gray-900 bg-gray-400" value="">Select Category</option>
+                                {/* ask abt this className="text-gray-900 bg-gray-400" value="">Select Category</option>*/}
                                 {/*mapping through unique categories */}
-                                {uniqueCategories.map((category, index) => (
-                                    <option key={index} value={category} className="capitalize text-gray-900 bg-gray-400">
-                                        {category}
+
+
+                                {uniqueCategory.map((category, index) => (
+
+                                    <option key={index} value={category} className="text-gray-900 bg-gray-400">
+
+                                        {formattedCategory(category)}
                                     </option>
+
                                 ))}
-                                
+
                             </select>
 
                             <label >Description</label>
@@ -105,18 +159,18 @@ export default function SidePanel({ isOpen, onClose }: SidePanelProps) {
                                 type='url'
                                 required />
 
-
                             <button
                                 //onClick={onClose}
+
                                 type="submit"
                                 className="px-4 py-2 bg-purple-400 text-white rounded hover:bg-purple-600 mt-"
+
                             >
                                 Done
                             </button>
+
                         </div>
                     </form>
-
-
 
                 </div >
             </div >

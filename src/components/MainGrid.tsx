@@ -3,8 +3,14 @@ import { useSelector } from "react-redux";
 import type { RootState } from "../store";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { setProducts } from "../store/productsSlice";
+import { deleteProduct, setProducts } from "../store/productsSlice";
 import { useState } from "react";
+import { uniqueCategories } from "../utils/uniqueCategories";
+import { filteredProducts } from "../utils/filteredProducts";
+import { sortByPrice } from "../utils/sortByPrice";
+import { formattedCategory } from '../utils/formattedCategory'
+import { toast } from 'sonner';
+import { Link } from "react-router-dom";
 
 /*
 First fetch data from API
@@ -27,43 +33,31 @@ export default function MainGrid() {
     const [search, setSearch] = useState("");
     const [price, setPrice] = useState("");
 
+    if (isLoading) return <p className="text-center">Loading...</p>;
+    if (isError) return <p className="text-center text-red-500">Error fetching products.</p>;
+    {/**ask abt this placing */ }
 
     const products = useSelector((state: RootState) => state.products.items);
-
     const dispatch = useDispatch();
 
     useEffect(() => {
         if (data) dispatch(setProducts(data));
     }, [data, dispatch]);
+
+
     {/*get unique categories and sort them */ }
 
-    const uniqueCategories = [
-        ...new Set(products.map((product) => product.category.toLowerCase()))
-    ].sort();
+    const uniqueCategory = uniqueCategories(products);
 
 
     {/*get unique price and sort them */ }
 
-    const uniquePrice = [
-        ...new Set(products.map((product) => product.price))
-    ].sort((a, b) => a - b);
 
-    if (isLoading) return <p className="text-center">Loading...</p>;
-    if (isError) return <p className="text-center text-red-500">Error fetching products.</p>;
 
-const filteredProducts = products
-  ?.filter((p) =>
-    category ? p.category === category : true
-  )
-  .filter((p) =>
-    search ? p.title.toLowerCase().includes(search.toLowerCase()) : true
-  )
-  .sort((a, b) => {
-    if (price === "low-to-high") return a.price - b.price;
-    if (price === "high-to-low") return b.price - a.price;
-    return 0;
-  });
 
+
+    const filteredProduct = filteredProducts(products, category, search)
+    const sortedProducts = sortByPrice(filteredProduct, price)
 
     return (
         <>
@@ -86,9 +80,13 @@ const filteredProducts = products
                         <option value="">All Categories</option>
 
                         {/* mapping through unique categories */}
-                        {uniqueCategories.map((category, index) => (
-                            <option key={index} value={category} className="capitalize">
-                                {category}
+                        {uniqueCategory.map((category, index) => (
+
+
+
+                            <option key={index} value={category}>
+
+                                {formattedCategory(category)}
                             </option>
                         ))}
                     </select>
@@ -105,55 +103,61 @@ const filteredProducts = products
                         <option value="high-to-low">High to Low</option>
 
                         {/* mapping through unique price */}
-                        {uniquePrice.map((price, index) => (
+
+                        { /*
+                        uniquePrice.map((price, index) => (
                             <option key={index} value={price}>
                                 ${price.toFixed(2)}
                             </option>
-                        ))}
+                        ))*/}
                     </select>
 
                 </div>
 
                 {/* Product Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {filteredProducts?.map((product) => (
-                        <div key={product.id} className="bg-gray-100 border rounded p-6 text-center text-gray-500">
-                            <img src={product.image} alt={product.title} className="h-40 mx-auto mb-6" />
-                            <h3 className="font-bold text-black">{product.title}</h3>
-                            <p className="font-bold text-gray-700">${product.price}</p>
-                            <p className="text-gray-700 capitalize">{product.category}</p>
-                            <p className="text-gray-700 ">Rating {product.rating.rate} </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-fr">
+                    {sortedProducts?.map((product) => (
+                        <Link to={`/project/${product.id}`} key={product.id}>
+                            <div className="bg-gray-100 border rounded p-6 text-center text-gray-500 flex flex-col justify-between h-full">
+                                {/*flex flex-col justify-between → lays out the card content vertically and pushes the first item 
+                                to the top and the last item (button) to the bottom. h-full → makes this card div stretch to the full 
+                                height of its grid cell */}
+                                <img src={product.image} alt={product.title} className="h-40 mx-auto mb-6" />
+                                <h3 className="font-bold text-black">{product.title}</h3>
+                                <p className="font-bold text-gray-700">${product.price}</p>
+                                <p className="text-gray-700 capitalize">{product.category}</p>
+                                <p className="text-gray-700 ">Rating {product.rating.rate} ({product.rating.count} reviews) </p>
 
-                            <button
-                                //onClick={() => refetch()}
-                                className="mt-4 px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-900"
-                            >
-                                Delete Product
-                            </button>
+                                <button
+                                    /*button clicked, action dispatched,remove from store,mainGrid rerenders, automatic refetch*/
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
 
-                        </div>
+                                        if (confirm(`Are you sure you want to delete "${product.title}"?`)) {
+                                            dispatch(deleteProduct(product.id))
+                                            toast.error('Product removed', {
+                                                description: 'The item is now removed from your store.',
+                                                //className: 'bg-white border-green-500 text-green-700',
+                                            });
+                                        }
+
+                                    }
+
+                                    }
+                                    className="mt-4 px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-900"
+                                >
+                                    Delete Product
+                                </button>
+
+                            </div>
+                        </Link>
                     ))}
 
                 </div>
 
-
-
-
-
-
-
-
-
-
             </div>
-
-
-
         </>
-
-
-
-
 
     );
 
