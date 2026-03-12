@@ -1,20 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-//import type { RootState } from '../store';
 import { ProductCardDetails } from '../components/ProductCardDetails';
 import { selectAllProducts } from '../store/selector';
 
 export default function ProjectDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  /*const products = useSelector((state: RootState) => [
-  ...state.products.apiItems.filter(
-    (p) => !state.products.deletedIds.includes(p.id)
-  ),
-  ...state.products.localItems,
-]);*/
 
-  const products = useSelector(selectAllProducts);
+
+const products = useSelector(selectAllProducts);
 
   const product = products.find((p) => p.id === Number(id));
 
