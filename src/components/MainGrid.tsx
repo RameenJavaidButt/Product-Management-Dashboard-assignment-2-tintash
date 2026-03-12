@@ -21,11 +21,14 @@ export default function MainGrid() {
   const dispatch = useDispatch();
  
 const visibleProducts = useSelector(selectVisibleProducts);
-
 useEffect(() => {
   if (!data) return;
   dispatch(setProducts(data));
   dispatch(restoreStateFromLocalStorage());
+  dispatch(searchProduct(""));
+  dispatch(filterCategory(""));
+  dispatch(sortbyPrice(""));
+
 }, [data, dispatch]);
 const allProducts = useSelector(selectAllProducts);
 
